@@ -167,6 +167,7 @@ func (m *Menu) clearLines() {
 
 func (m *Menu) iteration() {
 	fmt.Printf("%s\n", m.Title)
+	m.lineCounter++
 	path := ""
 	for node := m.cmdTree.Pointer; node != nil; node = node.Parent {
 		if node.Parent == nil {
@@ -176,6 +177,7 @@ func (m *Menu) iteration() {
 		}
 	}
 	fmt.Printf("At %s\n", path)
+	m.lineCounter++
 	for _, node := range m.cmdTree.Pointer.Children {
 		cmd := node.Val
 		if cmd == nil {
@@ -183,9 +185,11 @@ func (m *Menu) iteration() {
 			continue
 		}
 		cmd.Print()
+		m.lineCounter++
 	}
 	if m.cmdTree.Pointer != m.cmdTree.Root {
 		fmt.Printf("%s: Go back one layer\n", m.BackKey)
+		m.lineCounter++
 	}
 	stdinReader := bufio.NewReader(os.Stdin)
 	msg, err := stdinReader.ReadString('\n')
@@ -193,6 +197,7 @@ func (m *Menu) iteration() {
 		fmt.Printf("Error: ReadString: %v\n", err)
 		return
 	}
+	m.lineCounter++
 	msg = strings.TrimRight(msg, "\n")
 	for _, node := range m.cmdTree.Pointer.Children {
 		cmd := node.Val
