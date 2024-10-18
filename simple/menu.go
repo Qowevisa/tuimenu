@@ -31,14 +31,16 @@ func (c *Command) Print() {
 }
 
 type MenuConfig struct {
-	Title   string
-	BackKey string
+	Title            string
+	BackKey          string
+	UsingEscapeCodes bool
 }
 
 func getDefConfig() *MenuConfig {
 	return &MenuConfig{
-		Title:   "Default Menu Title",
-		BackKey: "<",
+		Title:            "Default Menu Title",
+		BackKey:          "<",
+		UsingEscapeCodes: false,
 	}
 }
 
@@ -84,6 +86,10 @@ func createCommandTree() *commandTree {
 type Menu struct {
 	Title   string
 	BackKey string
+	// Escape Code part
+	//
+	usingEscapeCodes bool
+	lineCounter      uint
 	//
 	counterForIDs uint
 	cmdTree       *commandTree
@@ -97,10 +103,12 @@ func CreateMenu(options ...SimpleMenuOption) *Menu {
 	}
 
 	return &Menu{
-		Title:         conf.Title,
-		BackKey:       conf.BackKey,
-		counterForIDs: 1,
-		cmdTree:       createCommandTree(),
+		Title:            conf.Title,
+		BackKey:          conf.BackKey,
+		usingEscapeCodes: conf.UsingEscapeCodes,
+		lineCounter:      0,
+		counterForIDs:    1,
+		cmdTree:          createCommandTree(),
 	}
 }
 
