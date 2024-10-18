@@ -165,6 +165,46 @@ func (m *Menu) clearLines() {
 	m.lineCounter = 0
 }
 
+func (m *Menu) handleInput(input string) {
+	var preHandler func()
+	var action CommandAction
+	var afterHandler func()
+	if m.usingEscapeCodes {
+		preHandler = func() {
+			m.clearLines()
+		}
+	}
+	for _, node := range m.cmdTree.Pointer.Children {
+		cmd := node.Val
+		if cmd == nil {
+			continue
+		}
+		if cmd.Key == input {
+			action = cmd.Action
+			if cmd.MoveTo {
+				afterHandler = func() {
+					m.cmdTree.Pointer = node
+				}
+			}
+			break
+		}
+	}
+	if m.BackKey == input {
+		afterHandler = func() {
+			m.cmdTree.Pointer = m.cmdTree.Pointer.Parent
+		}
+	}
+	if preHandler != nil {
+		preHandler()
+	}
+	if action != nil {
+		action(m)
+	}
+	if afterHandler != nil {
+		afterHandler()
+	}
+}
+
 func (m *Menu) iteration() {
 	fmt.Printf("%s\n", m.Title)
 	m.lineCounter++
@@ -199,19 +239,7 @@ func (m *Menu) iteration() {
 	}
 	m.lineCounter++
 	msg = strings.TrimRight(msg, "\n")
-	for _, node := range m.cmdTree.Pointer.Children {
-		cmd := node.Val
-		if cmd == nil {
-			continue
-		}
-		if cmd.Key == msg {
-			cmd.Action(m)
-			m.cmdTree.Pointer = node
-		}
-	}
-	if m.BackKey == msg {
-		m.cmdTree.Pointer = m.cmdTree.Pointer.Parent
-	}
+	m.handleInput(msg)
 }
 
 func (m *Menu) Start() {
