@@ -13,3 +13,9 @@ func WithCustomBackKey(back string) SimpleMenuOption {
 		conf.BackKey = back
 	}
 }
+
+func WithUsageOfEscapeCodes() SimpleMenuOption {
+	return func(conf *MenuConfig) {
+		conf.UsingEscapeCodes = true
+	}
+}
