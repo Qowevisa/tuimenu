@@ -158,6 +158,13 @@ func (m *Menu) AddCommand(key, name string, action CommandAction) (*commandNode,
 	return m.cmdTree.Root.AddCommand(key, name, action), nil
 }
 
+func (m *Menu) clearLines() {
+	for i := 0; i < int(m.lineCounter); i++ {
+		fmt.Printf("\033[F\033[K")
+	}
+	m.lineCounter = 0
+}
+
 func (m *Menu) iteration() {
 	fmt.Printf("%s\n", m.Title)
 	path := ""
