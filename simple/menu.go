@@ -208,8 +208,7 @@ func (m *Menu) handleInput(input string) {
 	}
 }
 
-func (m *Menu) iteration() {
-	m.Log.Flush()
+func (m *Menu) printMenu() {
 	fmt.Printf("%s\n", m.Title)
 	m.lineCounter++
 	path := ""
@@ -235,6 +234,11 @@ func (m *Menu) iteration() {
 		fmt.Printf("%s: Go back one layer\n", m.BackKey)
 		m.lineCounter++
 	}
+}
+
+func (m *Menu) iteration() {
+	m.Log.Flush()
+	m.printMenu()
 	stdinReader := bufio.NewReader(os.Stdin)
 	msg, err := stdinReader.ReadString('\n')
 	if err != nil {
