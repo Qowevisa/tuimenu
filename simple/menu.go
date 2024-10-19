@@ -192,7 +192,7 @@ func (m *Menu) handleInput(input string) {
 			break
 		}
 	}
-	if m.BackKey == input {
+	if m.cmdTree.Pointer != m.cmdTree.Root && m.BackKey == input {
 		afterHandler = func() {
 			m.cmdTree.Pointer = m.cmdTree.Pointer.Parent
 		}
