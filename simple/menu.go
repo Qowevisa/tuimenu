@@ -91,6 +91,8 @@ type Menu struct {
 	usingEscapeCodes bool
 	lineCounter      uint
 	//
+	Log *BufferedLogger
+	//
 	counterForIDs uint
 	cmdTree       *commandTree
 }
@@ -106,6 +108,7 @@ func CreateMenu(options ...SimpleMenuOption) *Menu {
 		Title:            conf.Title,
 		BackKey:          conf.BackKey,
 		usingEscapeCodes: conf.UsingEscapeCodes,
+		Log:              &BufferedLogger{},
 		lineCounter:      0,
 		counterForIDs:    1,
 		cmdTree:          createCommandTree(),
@@ -206,6 +209,7 @@ func (m *Menu) handleInput(input string) {
 }
 
 func (m *Menu) iteration() {
+	m.Log.Flush()
 	fmt.Printf("%s\n", m.Title)
 	m.lineCounter++
 	path := ""
