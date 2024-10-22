@@ -276,6 +276,7 @@ func (m *Menu) readInput() {
 
 func (m *Menu) GetInput(prompt string) string {
 	nlCount := strings.Count(prompt, "\n")
+	fmt.Printf(prompt)
 	m.lineCounter += uint(nlCount)
 	stdinReader := bufio.NewReader(os.Stdin)
 	rawMsg, err := stdinReader.ReadString('\n')
