@@ -19,3 +19,17 @@ func WithUsageOfEscapeCodes() SimpleMenuOption {
 		conf.UsingEscapeCodes = true
 	}
 }
+
+type InterruptOption func(intr *MenuInterrupt)
+
+type IntrOptStatus uint32
+
+const (
+	IntrOptStatus_ClearAfterFinish IntrOptStatus = 1 << iota
+)
+
+func ClearAfterFinishingFunc() InterruptOption {
+	return func(intr *MenuInterrupt) {
+		intr.Status |= IntrOptStatus_ClearAfterFinish
+	}
+}

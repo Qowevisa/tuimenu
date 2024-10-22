@@ -97,7 +97,7 @@ type Menu struct {
 	counterForIDs uint
 	cmdTree       *commandTree
 	//
-	interrupt    chan func(m *Menu)
+	interrupt    chan *MenuInterrupt
 	resumeSignal chan struct{}
 	inputChan    chan string
 	errorChan    chan error
@@ -118,7 +118,7 @@ func CreateMenu(options ...SimpleMenuOption) *Menu {
 		lineCounter:      0,
 		counterForIDs:    1,
 		cmdTree:          createCommandTree(),
-		interrupt:        make(chan func(m *Menu)),
+		interrupt:        make(chan *MenuInterrupt),
 		resumeSignal:     make(chan struct{}),
 		inputChan:        make(chan string),
 		errorChan:        make(chan error),
@@ -278,13 +278,7 @@ func (m *Menu) GetInput(prompt string) string {
 	nlCount := strings.Count(prompt, "\n")
 	fmt.Printf(prompt)
 	m.lineCounter += uint(nlCount)
-	stdinReader := bufio.NewReader(os.Stdin)
-	rawMsg, err := stdinReader.ReadString('\n')
-	if err != nil {
-		// fmt.Printf("Error: ReadString: %v\n", err)
-		m.errorChan <- err
-		return ""
-	}
+	rawMsg := <-m.inputChan
 	m.lineCounter++
 	msg := strings.TrimRight(rawMsg, "\n")
 	return msg
@@ -301,18 +295,33 @@ func (m *Menu) iteration() {
 		m.handleInput(msg)
 	case err := <-m.errorChan:
 		m.Log.Logf("err: %v", err)
-	case f := <-m.interrupt:
+	case intr := <-m.interrupt:
 		if m.usingEscapeCodes {
 			m.clearLines()
 		}
 		log.Printf("Interrupt")
-		f(m)
+		intr.Func(m)
+		if intr.Status&IntrOptStatus_ClearAfterFinish > 0 {
+			m.clearLines()
+		}
 	}
 	// }
 }
 
-func (m *Menu) SendInterrupt(f func(m *Menu)) {
-	m.interrupt <- f
+type MenuInterrupt struct {
+	Func   func(m *Menu)
+	Status IntrOptStatus
+}
+
+func (m *Menu) SendInterrupt(f func(m *Menu), intrOptions ...InterruptOption) {
+	intr := &MenuInterrupt{
+		Func:   f,
+		Status: 0,
+	}
+	for _, opt := range intrOptions {
+		opt(intr)
+	}
+	m.interrupt <- intr
 }
 
 func (m *Menu) Start() {
