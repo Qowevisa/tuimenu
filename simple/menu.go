@@ -171,6 +171,20 @@ func (m *Menu) AddCommand(key, name string, action CommandAction) (*commandNode,
 	return m.cmdTree.Root.AddCommand(key, name, action), nil
 }
 
+func (m *Menu) AddExecCommand(key, name string, action CommandAction) (*commandNode, error) {
+	if m.cmdTree == nil {
+		return nil, CommandTree_notInit
+	}
+	return m.cmdTree.Root.AddExecCommand(key, name, action), nil
+}
+
+func (m *Menu) AddGroupingCommand(key, name string) (*commandNode, error) {
+	if m.cmdTree == nil {
+		return nil, CommandTree_notInit
+	}
+	return m.cmdTree.Root.AddGroupingCommand(key, name), nil
+}
+
 func (m *Menu) clearLines() {
 	for i := 0; i < int(m.lineCounter); i++ {
 		fmt.Printf("\033[F\033[K")
