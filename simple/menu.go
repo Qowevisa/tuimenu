@@ -3,6 +3,7 @@ package simple
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 )
@@ -95,6 +96,11 @@ type Menu struct {
 	//
 	counterForIDs uint
 	cmdTree       *commandTree
+	//
+	interrupt    chan func(m *Menu)
+	resumeSignal chan struct{}
+	inputChan    chan string
+	errorChan    chan error
 }
 
 func CreateMenu(options ...SimpleMenuOption) *Menu {
@@ -112,6 +118,10 @@ func CreateMenu(options ...SimpleMenuOption) *Menu {
 		lineCounter:      0,
 		counterForIDs:    1,
 		cmdTree:          createCommandTree(),
+		interrupt:        make(chan func(m *Menu)),
+		resumeSignal:     make(chan struct{}),
+		inputChan:        make(chan string),
+		errorChan:        make(chan error),
 	}
 }
 
@@ -236,21 +246,62 @@ func (m *Menu) printMenu() {
 	}
 }
 
+func (m *Menu) readInput() {
+	stdinReader := bufio.NewReader(os.Stdin)
+	for {
+		msg, err := stdinReader.ReadString('\n')
+		if err != nil {
+			// fmt.Printf("Error: ReadString: %v\n", err)
+			m.errorChan <- err
+			return
+		}
+		m.lineCounter++
+		m.inputChan <- msg
+	}
+}
+
+func (m *Menu) GetInput(prompt string) string {
+	nlCount := strings.Count(prompt, "\n")
+	m.lineCounter += uint(nlCount)
+	stdinReader := bufio.NewReader(os.Stdin)
+	rawMsg, err := stdinReader.ReadString('\n')
+	if err != nil {
+		// fmt.Printf("Error: ReadString: %v\n", err)
+		m.errorChan <- err
+		return ""
+	}
+	m.lineCounter++
+	msg := strings.TrimRight(rawMsg, "\n")
+	return msg
+}
+
 func (m *Menu) iteration() {
 	m.Log.Flush()
 	m.printMenu()
-	stdinReader := bufio.NewReader(os.Stdin)
-	msg, err := stdinReader.ReadString('\n')
-	if err != nil {
-		fmt.Printf("Error: ReadString: %v\n", err)
-		return
+
+	// for {
+	select {
+	case msg := <-m.inputChan:
+		msg = strings.TrimRight(msg, "\n")
+		m.handleInput(msg)
+	case err := <-m.errorChan:
+		m.Log.Logf("err: %v", err)
+	case f := <-m.interrupt:
+		if m.usingEscapeCodes {
+			m.clearLines()
+		}
+		log.Printf("Interrupt")
+		f(m)
 	}
-	m.lineCounter++
-	msg = strings.TrimRight(msg, "\n")
-	m.handleInput(msg)
+	// }
+}
+
+func (m *Menu) SendInterrupt(f func(m *Menu)) {
+	m.interrupt <- f
 }
 
 func (m *Menu) Start() {
+	go m.readInput()
 	for {
 		m.iteration()
 	}
