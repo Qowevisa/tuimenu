@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"git.qowevisa.me/Qowevisa/tuimenu/simple"
+	"git.qowevisa.me/qowevisa/tuimenu/simple"
 )
 
 func main() {
